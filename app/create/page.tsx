@@ -1,6 +1,26 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+const generateRoomCode = () => {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
+  for (let i = 0; i < 6; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
+};
 
 export default function CreateGamePage() {
+  const [roomCode, setRoomCode] = useState("");
+
+  useEffect(() => {
+    const code = generateRoomCode();
+    const timer = setTimeout(() => setRoomCode(code), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white p-8">
       <div className="text-center w-full max-w-md p-8 bg-gray-800 rounded-xl shadow-lg border border-gray-700">
@@ -14,7 +34,9 @@ export default function CreateGamePage() {
         <div className="text-left bg-gray-900 p-4 rounded-lg">
           <p>
             Game Code:{" "}
-            <span className="font-mono bg-gray-700 p-1 rounded">XYZ123</span>
+            <span className="font-mono bg-gray-700 p-1 rounded">
+              {roomCode}
+            </span>
           </p>
           <p>Players: You</p>
           <p>Properties to Win: 3</p>
