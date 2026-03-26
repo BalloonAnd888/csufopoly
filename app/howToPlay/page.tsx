@@ -1,9 +1,41 @@
+"use client";
+
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+// Define the type for a card based on your table schema
+interface Card {
+  id: number;
+  name: string;
+  type: string;
+  value: number;
+  main_color: string | null;
+  secondary_color: string | null;
+  is_wildcard: boolean;
+  quantity: number;
+  description: string | null;
+}
 
 export default function HowToPlayPage() {
+  const supabase = createClient();
+  const [cards, setCards] = useState<Card[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCards = async () => {
+      const { data, error } = await supabase.from("cards").select("*");
+      if (error) setError(error.message);
+      else setCards(data);
+      setLoading(false);
+    };
+    fetchCards();
+  }, [supabase]);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white p-8">
-      <div className="w-full max-w-2xl p-8 bg-gray-800 rounded-xl shadow-lg border border-gray-700">
+    <main className="flex min-h-screen flex-col items-center bg-gray-900 text-white p-8">
+      <div className="w-full max-w-3xl p-8 bg-gray-800 rounded-xl shadow-lg border border-gray-700 mb-12 mt-8">
         <h1 className="text-4xl font-bold mb-6 text-center">How to Play</h1>
 
         <div className="space-y-6 text-gray-300">
@@ -61,6 +93,41 @@ export default function HowToPlayPage() {
             &larr; Back to Home
           </Link>
         </div>
+      </div>
+
+      <div className="w-full max-w-6xl mb-8">
+        <h2 className="text-3xl font-bold mb-8 text-center">Card Deck</h2>
+
+        {loading ? (
+          <p className="text-center text-gray-400">Loading cards...</p>
+        ) : error ? (
+          <p className="text-center text-red-500">
+            Error fetching cards: {error}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {cards.map((card) => (
+              <div
+                key={card.id}
+                className="border border-gray-700 p-4 rounded-xl shadow-lg bg-gray-800"
+              >
+                <h3 className="font-bold text-xl mb-2">{card.name}</h3>
+                <p className="text-sm text-gray-400">
+                  Type: <span className="text-gray-200">{card.type}</span>
+                </p>
+                <p className="text-sm text-gray-400">
+                  Value: <span className="text-green-400">{card.value}M</span>
+                </p>
+                {card.main_color && (
+                  <p className="text-sm text-gray-400">
+                    Color:{" "}
+                    <span className="text-gray-200">{card.main_color}</span>
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );

@@ -1,0 +1,70 @@
+-- Populate the cards table with the standard 110-card deck definitions
+INSERT INTO cards (name, type, value, main_color, secondary_color, is_wildcard, quantity, description) VALUES
+
+-- PROPERTIES (28 Total)
+('Boardwalk', 'property', 4, 'dark_blue', NULL, FALSE, 1, NULL),
+('Park Place', 'property', 4, 'dark_blue', NULL, FALSE, 1, NULL),
+('Pennsylvania Ave', 'property', 4, 'green', NULL, FALSE, 1, NULL),
+('North Carolina Ave', 'property', 4, 'green', NULL, FALSE, 1, NULL),
+('Pacific Ave', 'property', 4, 'green', NULL, FALSE, 1, NULL),
+('Kentucky Ave', 'property', 3, 'red', NULL, FALSE, 1, NULL),
+('Indiana Ave', 'property', 3, 'red', NULL, FALSE, 1, NULL),
+('Illinois Ave', 'property', 3, 'red', NULL, FALSE, 1, NULL),
+('Ventnor Ave', 'property', 3, 'yellow', NULL, FALSE, 1, NULL),
+('Atlantic Ave', 'property', 3, 'yellow', NULL, FALSE, 1, NULL),
+('Marvin Gardens', 'property', 3, 'yellow', NULL, FALSE, 1, NULL),
+('New York Ave', 'property', 2, 'orange', NULL, FALSE, 1, NULL),
+('Tennessee Ave', 'property', 2, 'orange', NULL, FALSE, 1, NULL),
+('St. James Place', 'property', 2, 'orange', NULL, FALSE, 1, NULL),
+('Virginia Ave', 'property', 2, 'magenta', NULL, FALSE, 1, NULL),
+('States Ave', 'property', 2, 'magenta', NULL, FALSE, 1, NULL),
+('St. Charles Place', 'property', 2, 'magenta', NULL, FALSE, 1, NULL),
+('Connecticut Ave', 'property', 1, 'light_blue', NULL, FALSE, 1, NULL),
+('Vermont Ave', 'property', 1, 'light_blue', NULL, FALSE, 1, NULL),
+('Oriental Ave', 'property', 1, 'light_blue', NULL, FALSE, 1, NULL),
+('Baltic Ave', 'property', 1, 'brown', NULL, FALSE, 1, NULL),
+('Mediterranean Ave', 'property', 1, 'brown', NULL, FALSE, 1, NULL),
+('Short Line', 'property', 2, 'railroad', NULL, FALSE, 1, NULL),
+('Reading Railroad', 'property', 2, 'railroad', NULL, FALSE, 1, NULL),
+('Pennsylvania Railroad', 'property', 2, 'railroad', NULL, FALSE, 1, NULL),
+('B. & O. Railroad', 'property', 2, 'railroad', NULL, FALSE, 1, NULL),
+('Water Works', 'property', 2, 'utility', NULL, FALSE, 1, NULL),
+('Electric Company', 'property', 2, 'utility', NULL, FALSE, 1, NULL),
+
+-- WILDCARDS (11 Total)
+('Blue/Green Wildcard', 'wildcard', 4, 'dark_blue', 'green', TRUE, 1, 'Can be used as Dark Blue or Green'),
+('Green/Railroad Wildcard', 'wildcard', 4, 'green', 'railroad', TRUE, 1, NULL),
+('Red/Yellow Wildcard', 'wildcard', 3, 'red', 'yellow', TRUE, 2, NULL),
+('Orange/Magenta Wildcard', 'wildcard', 2, 'orange', 'magenta', TRUE, 2, NULL),
+('Light Blue/Brown Wildcard', 'wildcard', 1, 'light_blue', 'brown', TRUE, 1, NULL),
+('Light Blue/Railroad Wildcard', 'wildcard', 4, 'light_blue', 'railroad', TRUE, 1, NULL),
+('Utility/Railroad Wildcard', 'wildcard', 2, 'utility', 'railroad', TRUE, 1, NULL),
+('Multi-Color Wildcard', 'wildcard', 0, 'any', NULL, TRUE, 2, 'Can be any color. No monetary value.'),
+
+-- ACTION CARDS (34 Total)
+('Deal Breaker', 'action', 5, NULL, NULL, FALSE, 2, 'Steal a completed set'),
+('Sly Deal', 'action', 3, NULL, NULL, FALSE, 3, 'Steal a single property'),
+('Forced Deal', 'action', 3, NULL, NULL, FALSE, 3, 'Swap properties with another player'),
+('Debt Collector', 'action', 3, NULL, NULL, FALSE, 3, 'Collect 2M from one player'),
+('It''s My Birthday', 'action', 2, NULL, NULL, FALSE, 3, 'Collect 2M from all players'),
+('Pass Go', 'action', 1, NULL, NULL, FALSE, 10, 'Draw 2 extra cards'),
+('Say No Nay', 'action', 4, NULL, NULL, FALSE, 3, 'Block an action played against you'),
+('Double The Rent', 'action', 1, NULL, NULL, FALSE, 2, 'Play with a rent card to double it'),
+('House', 'building', 3, NULL, NULL, FALSE, 3, 'Add 3M rent to a completed set'),
+('Hotel', 'building', 4, NULL, NULL, FALSE, 2, 'Add 4M rent to a completed set with a house'),
+
+-- RENT CARDS (13 Total)
+('Rent (Dark Blue/Green)', 'rent', 1, 'dark_blue', 'green', FALSE, 2, NULL),
+('Rent (Red/Yellow)', 'rent', 1, 'red', 'yellow', FALSE, 2, NULL),
+('Rent (Pink/Orange)', 'rent', 1, 'magenta', 'orange', FALSE, 2, NULL),
+('Rent (Light Blue/Brown)', 'rent', 1, 'light_blue', 'brown', FALSE, 2, NULL),
+('Rent (Railroad/Utility)', 'rent', 1, 'railroad', 'utility', FALSE, 2, NULL),
+('Rent (Any Color)', 'rent', 3, 'any', NULL, FALSE, 3, NULL),
+
+-- MONEY CARDS (20 Total)
+('10M Card', 'money', 10, NULL, NULL, FALSE, 1, NULL),
+('5M Card', 'money', 5, NULL, NULL, FALSE, 2, NULL),
+('4M Card', 'money', 4, NULL, NULL, FALSE, 3, NULL),
+('3M Card', 'money', 3, NULL, NULL, FALSE, 3, NULL),
+('2M Card', 'money', 2, NULL, NULL, FALSE, 5, NULL),
+('1M Card', 'money', 1, NULL, NULL, FALSE, 6, NULL);
