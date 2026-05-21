@@ -1,25 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-const generateRoomCode = () => {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "";
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-};
-
-export default function CreateGamePage() {
-  const [roomCode, setRoomCode] = useState("");
-
-  useEffect(() => {
-    const code = generateRoomCode();
-    const timer = setTimeout(() => setRoomCode(code), 0);
-    return () => clearTimeout(timer);
-  }, []);
+function CreateGameContent() {
+  const searchParams = useSearchParams();
+  const roomCode = searchParams.get("code") || "Loading...";
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white p-8">
@@ -50,5 +37,19 @@ export default function CreateGamePage() {
         </Link>
       </div>
     </main>
+  );
+}
+
+export default function CreateGamePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <CreateGameContent />
+    </Suspense>
   );
 }
