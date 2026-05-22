@@ -3,10 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function HomePage() {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
+  const [username, setUsername] = useState("");
 
   const handleCreateGame = async () => {
     setIsCreating(true);
@@ -38,19 +46,52 @@ export default function HomePage() {
       </div>
 
       <div className="flex flex-col space-y-4 w-full max-w-xs">
-        <button
-          onClick={handleCreateGame}
-          disabled={isCreating}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-lg text-center"
-        >
-          {isCreating ? "Creating..." : "Create Game"}
-        </button>
-        <Link
-          href="/join"
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-lg text-center"
-        >
-          Join Game
-        </Link>
+        <Input
+          id="username"
+          placeholder="Enter your username"
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="w-full block">
+                <button
+                  onClick={handleCreateGame}
+                  disabled={isCreating || !username.trim()}
+                  className="w-full bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:pointer-events-none text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-lg text-center"
+                >
+                  {isCreating ? "Creating..." : "Create Game"}
+                </button>
+              </span>
+            </TooltipTrigger>
+            {!username.trim() && (
+              <TooltipContent>
+                <p>Enter Username</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="w-full block">
+                <button
+                  onClick={() => router.push("/join")}
+                  disabled={!username.trim()}
+                  className="w-full bg-green-600 hover:bg-green-700 cursor-pointer disabled:pointer-events-none text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-lg text-center"
+                >
+                  Join Game
+                </button>
+              </span>
+            </TooltipTrigger>
+            {!username.trim() && (
+              <TooltipContent>
+                <p>Enter Username</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
         <Link
           href="/howToPlay"
           className="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-lg text-center"
