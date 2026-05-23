@@ -2,6 +2,7 @@ CREATE TABLE players (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   game_id UUID REFERENCES games(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  room_id TEXT NOT NULL REFERENCES games(invite_code) ON DELETE CASCADE, 
   username TEXT NOT NULL,
   avatar_url TEXT,
   turn_order INTEGER, -- 0, 1, 2, 3

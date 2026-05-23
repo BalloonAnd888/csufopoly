@@ -11,24 +11,57 @@ const generateRoomCode = () => {
   return result;
 };
 
-export async function POST() {
-  const inviteCode = generateRoomCode();
+export async function POST(request: Request) {
+  try {
+    const { username } = await request.json();
 
-  // Insert the new game into the games table
-  const { data, error } = await supabaseServer
-    .from("games")
-    .insert([
+    if (!username || !username.trim()) {
+      return NextResponse.json(
+        { error: "Username is required" },
+        { status: 400 },
+      );
+    }
+
+    const inviteCode = generateRoomCode();
+
+    const { data: gameData, error: gameError } = await supabaseServer
+      .from("games")
+      .insert([
+        {
+          invite_code: inviteCode,
+          status: "waiting",
+        },
+      ])
+      .select("id, invite_code")
+      .single();
+
+    if (gameError) {
+      return NextResponse.json({ error: gameError.message }, { status: 500 });
+    }
+
+    const { error: playerError } = await supabaseServer.from("players").insert([
       {
-        invite_code: inviteCode,
-        status: "waiting",
+        game_id: gameData.id,
+        room_id: inviteCode,
+        username: username.trim(),
+        is_host: true,
+        is_ready: true,
       },
-    ])
-    .select()
-    .single();
+    ]);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (playerError) {
+      return NextResponse.json({ error: playerError.message }, { status: 500 });
+    }
+
+    return NextResponse.json(
+      { inviteCode: gameData.invite_code, gameId: gameData.id },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("Error creating game:", error);
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 },
+    );
   }
-
-  return NextResponse.json({ inviteCode: data.invite_code }, { status: 200 });
 }

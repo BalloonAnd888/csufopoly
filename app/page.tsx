@@ -16,16 +16,27 @@ export default function HomePage() {
   const [isCreating, setIsCreating] = useState(false);
   const [username, setUsername] = useState("");
 
+  // Look for handleCreateGame in app/page.tsx and update it to look like this:
+
   const handleCreateGame = async () => {
     setIsCreating(true);
     try {
-      const response = await fetch("/api/create-game", { method: "POST" });
+      const response = await fetch("/api/create-game", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username }),
+      });
+
       if (!response.ok) {
         throw new Error(`Failed to create game: ${response.statusText}`);
       }
       const data = await response.json();
-      if (data.inviteCode) {
-        router.push(`/create?code=${data.inviteCode}`);
+      if (data.inviteCode && data.gameId) {
+        router.push(
+          `/create?code=${data.inviteCode}&gameId=${data.gameId}&username=${encodeURIComponent(username.trim())}`,
+        );
       }
     } catch (error) {
       console.error("Failed to create game:", error);
@@ -77,7 +88,11 @@ export default function HomePage() {
             <TooltipTrigger asChild>
               <span className="w-full block">
                 <button
-                  onClick={() => router.push("/join")}
+                  onClick={() =>
+                    router.push(
+                      `/join?username=${encodeURIComponent(username.trim())}`,
+                    )
+                  }
                   disabled={!username.trim()}
                   className="w-full bg-green-600 hover:bg-green-700 cursor-pointer disabled:pointer-events-none text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-lg text-center"
                 >
