@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { supabaseServer } from "@/lib/supabase/client";
 
 interface Player {
   id: string;
@@ -17,10 +17,15 @@ function CreateGameContent() {
   const roomCode = searchParams.get("code") || "Loading...";
   const gameId = searchParams.get("gameId");
   const currentUsername = searchParams.get("username");
+  const router = useRouter();
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const currentPlayerId = players.find(
+    (p) => p.username === currentUsername,
+  )?.id;
 
   useEffect(() => {
     async function fetchPlayers() {
@@ -44,7 +49,110 @@ function CreateGameContent() {
     }
 
     fetchPlayers();
+
+    if (!gameId) return;
+
+    // Subscribe to real-time changes for this specific game's players
+    const channel = supabaseServer
+      .channel("realtime:players")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "players",
+          filter: `game_id=eq.${gameId}`,
+        },
+        () => {
+          fetchPlayers();
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "players",
+          filter: `game_id=eq.${gameId}`,
+        },
+        () => {
+          fetchPlayers();
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "players",
+        },
+        (payload) => {
+          setPlayers((prevPlayers) =>
+            prevPlayers.filter((player) => player.id !== payload.old.id),
+          );
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabaseServer.removeChannel(channel);
+    };
   }, [gameId]);
+
+  // Realtime Presence for tracking online users and handling tab closures
+  useEffect(() => {
+    if (!gameId || !currentPlayerId) return;
+
+    const presenceChannel = supabaseServer.channel(`presence-${gameId}`, {
+      config: {
+        presence: {
+          key: currentPlayerId,
+        },
+      },
+    });
+
+    presenceChannel
+      .on("presence", { event: "leave" }, ({ key }) => {
+        setTimeout(() => {
+          const state = presenceChannel.presenceState();
+          // If they haven't reconnected after 5 seconds, they've actually left
+          if (!Object.keys(state).includes(key)) {
+            setPlayers((currentPlayers) => {
+              const me = currentPlayers.find((p) => p.id === currentPlayerId);
+              // If the current user is the host, clean up the player who disconnected
+              if (me?.is_host && key !== currentPlayerId) {
+                fetch("/api/leave-game", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ playerId: key }),
+                });
+              }
+              return currentPlayers;
+            });
+          }
+        }, 5000); // 5-second grace period for page refreshes
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await presenceChannel.track({ online: true });
+        }
+      });
+
+    return () => {
+      supabaseServer.removeChannel(presenceChannel);
+    };
+  }, [gameId, currentPlayerId]);
+
+  const handleLeaveGame = async () => {
+    if (currentPlayerId) {
+      await fetch("/api/leave-game", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerId: currentPlayerId }),
+      });
+    }
+    router.push("/");
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white p-8">
@@ -103,12 +211,12 @@ function CreateGameContent() {
           )}
         </div>
 
-        <Link
-          href="/"
+        <button
+          onClick={handleLeaveGame}
           className="mt-8 inline-block text-blue-400 hover:text-blue-300"
         >
           &larr; Back to Home
-        </Link>
+        </button>
       </div>
     </main>
   );
