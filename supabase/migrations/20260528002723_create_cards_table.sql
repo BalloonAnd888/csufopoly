@@ -14,3 +14,9 @@ CREATE TABLE cards (
 -- Indexing for performance
 CREATE INDEX idx_cards_type ON cards(type);
 CREATE INDEX idx_cards_main_color ON cards(main_color);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE cards ENABLE ROW LEVEL SECURITY;
+
+-- Create a policy to allow public read access (since it's a static reference table)
+CREATE POLICY "Allow public read access on cards" ON cards FOR SELECT USING (true);

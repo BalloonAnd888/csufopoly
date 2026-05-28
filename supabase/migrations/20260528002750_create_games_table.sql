@@ -10,3 +10,9 @@ CREATE TABLE games (
 
 -- Enable Realtime for game status updates (e.g., game starts!)
 ALTER PUBLICATION supabase_realtime ADD TABLE games;
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE games ENABLE ROW LEVEL SECURITY;
+
+-- Create a policy to allow public read access
+CREATE POLICY "Allow public read access on games" ON games FOR SELECT USING (true);

@@ -20,3 +20,9 @@ ALTER TABLE games ADD COLUMN current_turn_player_id UUID REFERENCES players(id);
 
 -- Enable Realtime for player list updates (e.g., someone joins/leaves)
 ALTER PUBLICATION supabase_realtime ADD TABLE players;
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE players ENABLE ROW LEVEL SECURITY;
+
+-- Create a policy to allow public read access
+CREATE POLICY "Allow public read access on players" ON players FOR SELECT USING (true);
