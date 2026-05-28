@@ -22,17 +22,20 @@ function CreateGameContent() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const currentPlayerId = players.find(
     (p) => p.username === currentUsername,
   )?.id;
+
+  const currentPlayer = players.find((p) => p.id === currentPlayerId);
 
   useEffect(() => {
     async function fetchPlayers() {
       if (!gameId) return;
 
       try {
-        const response = await fetch(`/api/get-players?gameId=${gameId}`);
+        const response = await fetch(`/api/games/${gameId}/players`);
         const data = await response.json();
 
         if (!response.ok) {
@@ -121,8 +124,8 @@ function CreateGameContent() {
               const me = currentPlayers.find((p) => p.id === currentPlayerId);
               // If the current user is the host, clean up the player who disconnected
               if (me?.is_host && key !== currentPlayerId) {
-                fetch("/api/leave-game", {
-                  method: "POST",
+                fetch(`/api/games/${gameId}/players`, {
+                  method: "DELETE",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ playerId: key }),
                 });
@@ -145,13 +148,34 @@ function CreateGameContent() {
 
   const handleLeaveGame = async () => {
     if (currentPlayerId) {
-      await fetch("/api/leave-game", {
-        method: "POST",
+      await fetch(`/api/games/${gameId}/players`, {
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ playerId: currentPlayerId }),
       });
     }
     router.push("/");
+  };
+
+  const handleToggleReady = async () => {
+    if (!currentPlayerId || !currentPlayer) return;
+
+    setIsUpdating(true);
+    try {
+      const { error: updateError } = await supabaseServer
+        .from("players")
+        .update({ is_ready: !currentPlayer.is_ready })
+        .eq("id", currentPlayerId);
+
+      if (updateError) throw updateError;
+    } catch (err) {
+      console.error("Error toggling ready state:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to update ready state",
+      );
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -211,12 +235,34 @@ function CreateGameContent() {
           )}
         </div>
 
-        <button
-          onClick={handleLeaveGame}
-          className="mt-8 inline-block text-blue-400 hover:text-blue-300"
-        >
-          &larr; Back to Home
-        </button>
+        {currentPlayer && !currentPlayer.is_host && (
+          <div className="mt-6">
+            <button
+              onClick={handleToggleReady}
+              disabled={isUpdating}
+              className={`w-full py-3 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                currentPlayer.is_ready
+                  ? "bg-yellow-600 hover:bg-yellow-700 text-white"
+                  : "bg-green-600 hover:bg-green-700 text-white"
+              }`}
+            >
+              {isUpdating
+                ? "Updating..."
+                : currentPlayer.is_ready
+                  ? "Unready"
+                  : "Ready"}
+            </button>
+          </div>
+        )}
+
+        <div>
+          <button
+            onClick={handleLeaveGame}
+            className="mt-8 inline-block text-blue-400 hover:text-blue-300"
+          >
+            &larr; Back to Home
+          </button>
+        </div>
       </div>
     </main>
   );

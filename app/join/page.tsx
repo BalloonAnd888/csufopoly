@@ -23,16 +23,18 @@ function JoinGameContent() {
 
     setIsJoining(true);
     try {
-      const response = await fetch("/api/join-game", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `/api/games/${roomCode.trim().toUpperCase()}/players`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: username.trim(),
+          }),
         },
-        body: JSON.stringify({
-          roomCode: roomCode.trim().toUpperCase(),
-          username: username.trim(),
-        }),
-      });
+      );
 
       const data = await response.json();
 

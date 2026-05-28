@@ -21,7 +21,7 @@ export default function HomePage() {
   const handleCreateGame = async () => {
     setIsCreating(true);
     try {
-      const response = await fetch("/api/create-game", {
+      const response = await fetch("/api/games", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

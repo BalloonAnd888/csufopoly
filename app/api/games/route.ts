@@ -1,4 +1,3 @@
-// app/api/create-game/route.ts
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/client";
 
