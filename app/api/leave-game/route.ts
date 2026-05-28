@@ -12,21 +12,22 @@ export async function POST(request: Request) {
       );
     }
 
-    const { error } = await supabaseServer
+    const { error: deleteError } = await supabaseServer
       .from("players")
       .delete()
       .eq("id", playerId);
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (deleteError) {
+      console.error("Supabase player delete error:", deleteError);
+      return NextResponse.json({ error: deleteError.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error("Error leaving game:", error);
+    console.error("Error in leave-game:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
+      { error: "Invalid request body" },
+      { status: 400 },
     );
   }
 }

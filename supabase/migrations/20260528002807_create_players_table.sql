@@ -26,3 +26,9 @@ ALTER TABLE players ENABLE ROW LEVEL SECURITY;
 
 -- Create a policy to allow public read access
 CREATE POLICY "Allow public read access on players" ON players FOR SELECT USING (true);
+
+-- Create a policy to allow public insert access
+CREATE POLICY "Allow public insert access on players" ON players FOR INSERT WITH CHECK (true);
+
+-- Create a policy to allow public delete access
+CREATE POLICY "Allow public delete access on players" ON players FOR DELETE USING (true);

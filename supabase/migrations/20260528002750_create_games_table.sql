@@ -16,3 +16,6 @@ ALTER TABLE games ENABLE ROW LEVEL SECURITY;
 
 -- Create a policy to allow public read access
 CREATE POLICY "Allow public read access on games" ON games FOR SELECT USING (true);
+
+-- Create a policy to allow public insert access
+CREATE POLICY "Allow public insert access on games" ON games FOR INSERT WITH CHECK (true);

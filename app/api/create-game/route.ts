@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       .single();
 
     if (gameError) {
+      console.error("Supabase game insert error:", gameError);
       return NextResponse.json({ error: gameError.message }, { status: 500 });
     }
 
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
     ]);
 
     if (playerError) {
+      console.error("Supabase player insert error:", playerError);
       return NextResponse.json({ error: playerError.message }, { status: 500 });
     }
 
