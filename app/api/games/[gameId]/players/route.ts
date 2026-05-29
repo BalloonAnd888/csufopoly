@@ -150,6 +150,7 @@ export async function DELETE(
   { params }: { params: Promise<{ gameId: string }> },
 ) {
   try {
+    const { gameId } = await params;
     const { playerId } = await request.json();
 
     if (!playerId) {
@@ -162,7 +163,8 @@ export async function DELETE(
     const { error: deleteError } = await supabaseServer
       .from("players")
       .delete()
-      .eq("id", playerId);
+      .eq("id", playerId)
+      .eq("game_id", gameId);
 
     if (deleteError) {
       console.error("Supabase player delete error:", deleteError);
