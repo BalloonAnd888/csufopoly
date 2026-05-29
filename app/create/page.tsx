@@ -35,7 +35,9 @@ function CreateGameContent() {
       if (!gameId) return;
 
       try {
-        const response = await fetch(`/api/games/${gameId}/players`);
+        const response = await fetch(`/api/games/${gameId}/players`, {
+          cache: "no-store",
+        });
         const data = await response.json();
 
         if (!response.ok) {
@@ -161,15 +163,38 @@ function CreateGameContent() {
     if (!currentPlayerId || !currentPlayer) return;
 
     setIsUpdating(true);
-    try {
-      const { error: updateError } = await supabaseServer
-        .from("players")
-        .update({ is_ready: !currentPlayer.is_ready })
-        .eq("id", currentPlayerId);
+    const originalState = currentPlayer.is_ready;
+    const newReadyState = !originalState;
 
-      if (updateError) throw updateError;
+    // Optimistic UI update
+    setPlayers((prev) =>
+      prev.map((p) =>
+        p.id === currentPlayerId ? { ...p, is_ready: newReadyState } : p,
+      ),
+    );
+
+    try {
+      const response = await fetch(`/api/games/${gameId}/players`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          playerId: currentPlayerId,
+          isReady: newReadyState,
+        }),
+      });
+      const data = await response.json();
+      console.log(data);
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to update ready state");
+      }
     } catch (err) {
       console.error("Error toggling ready state:", err);
+      // Revert optimistic update on error
+      setPlayers((prev) =>
+        prev.map((p) =>
+          p.id === currentPlayerId ? { ...p, is_ready: originalState } : p,
+        ),
+      );
       setError(
         err instanceof Error ? err.message : "Failed to update ready state",
       );

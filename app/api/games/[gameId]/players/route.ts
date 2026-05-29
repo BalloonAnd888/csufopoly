@@ -35,6 +35,53 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ gameId: string }> },
+) {
+  try {
+    const { gameId } = await params;
+    const { playerId, isReady } = await request.json();
+
+    if (!playerId || typeof isReady !== "boolean") {
+      return NextResponse.json(
+        { error: "Player ID and isReady status are required" },
+        { status: 400 },
+      );
+    }
+
+    const { data, error: updateError } = await supabaseServer
+      .from("players")
+      .update({ is_ready: isReady })
+      .eq("id", playerId)
+      .eq("game_id", gameId)
+      .select();
+
+    if (updateError) {
+      console.error("Supabase player update error:", updateError);
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+
+    if (!data || data.length === 0) {
+      console.error(
+        "Update affected 0 rows. Check RLS policies or if player exists.",
+      );
+      return NextResponse.json(
+        { error: "Failed to update player (RLS blocked or not found)" },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json({ success: true, isReady }, { status: 200 });
+  } catch (error) {
+    console.error("Error updating player status:", error);
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 },
+    );
+  }
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ gameId: string }> },

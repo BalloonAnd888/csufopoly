@@ -32,3 +32,6 @@ CREATE POLICY "Allow public insert access on players" ON players FOR INSERT WITH
 
 -- Create a policy to allow public delete access
 CREATE POLICY "Allow public delete access on players" ON players FOR DELETE USING (true);
+
+-- Create a policy to allow public update access
+CREATE POLICY "Allow public update access on players" ON players FOR UPDATE USING (true);
