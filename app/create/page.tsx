@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { supabaseServer } from "@/lib/supabase/client";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface Player {
   id: string;
@@ -23,6 +24,8 @@ function CreateGameContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [broadcastChannel, setBroadcastChannel] =
+    useState<RealtimeChannel | null>(null);
 
   const currentPlayerId = players.find(
     (p) => p.username === currentUsername,
@@ -103,6 +106,26 @@ function CreateGameContent() {
       supabaseServer.removeChannel(channel);
     };
   }, [gameId]);
+
+  // Realtime Broadcast for game events like starting the game
+  useEffect(() => {
+    if (!gameId) return;
+
+    const channel = supabaseServer
+      .channel(`game-broadcast-${gameId}`)
+      .on("broadcast", { event: "start_game" }, () => {
+        router.push(
+          `/game?code=${roomCode}&gameId=${gameId}&username=${currentUsername}`,
+        );
+      })
+      .subscribe();
+
+    setBroadcastChannel(channel);
+
+    return () => {
+      supabaseServer.removeChannel(channel);
+    };
+  }, [gameId, roomCode, currentUsername, router]);
 
   // Realtime Presence for tracking online users and handling tab closures
   useEffect(() => {
@@ -203,6 +226,20 @@ function CreateGameContent() {
     }
   };
 
+  const handleStartGame = async () => {
+    if (broadcastChannel) {
+      await broadcastChannel.send({
+        type: "broadcast",
+        event: "start_game",
+        payload: {},
+      });
+    }
+
+    router.push(
+      `/game?code=${roomCode}&gameId=${gameId}&username=${currentUsername}`,
+    );
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white p-8">
       <div className="text-center w-full max-w-md p-8 bg-gray-800 rounded-xl shadow-lg border border-gray-700">
@@ -260,7 +297,7 @@ function CreateGameContent() {
           )}
         </div>
 
-        {currentPlayer && !currentPlayer.is_host && (
+        {currentPlayer && !currentPlayer.is_host ? (
           <div className="mt-6">
             <button
               onClick={handleToggleReady}
@@ -278,7 +315,17 @@ function CreateGameContent() {
                   : "Ready"}
             </button>
           </div>
-        )}
+        ) : currentPlayer && currentPlayer.is_host ? (
+          <div className="mt-6">
+            <button
+              onClick={handleStartGame}
+              disabled={!players.every((p) => p.is_ready)}
+              className="w-full py-3 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Start Game
+            </button>
+          </div>
+        ) : null}
 
         <div>
           <button
