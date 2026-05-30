@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { supabaseServer } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -18,20 +18,19 @@ interface Card {
 }
 
 export default function HowToPlayPage() {
-  const supabase = createClient();
   const [cards, setCards] = useState<Card[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCards = async () => {
-      const { data, error } = await supabase.from("cards").select("*");
+      const { data, error } = await supabaseServer.from("cards").select("*");
       if (error) setError(error.message);
       else setCards(data);
       setLoading(false);
     };
     fetchCards();
-  }, [supabase]);
+  }, []);
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-gray-900 text-white p-8">
