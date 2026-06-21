@@ -43,9 +43,10 @@ function JoinGameContent() {
       }
 
       if (data.inviteCode && data.gameId) {
-        router.push(
-          `/create?code=${data.inviteCode}&gameId=${data.gameId}&username=${encodeURIComponent(username.trim())}`,
-        );
+        sessionStorage.setItem("roomCode", data.inviteCode);
+        sessionStorage.setItem("gameId", data.gameId);
+        sessionStorage.setItem("username", username.trim());
+        router.push("/create");
       }
     } catch (err) {
       console.error("Failed to join game:", err);

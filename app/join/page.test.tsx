@@ -5,22 +5,39 @@ import JoinGamePage from "./page";
 
 // Mock router and search params
 const mockPush = vi.fn();
-let mockUrlParams = new URLSearchParams();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
   }),
-  useSearchParams: () => mockUrlParams,
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 const mockFetch = vi.fn();
 
+// Mock sessionStorage
+const sessionStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+  };
+})();
+
 beforeEach(() => {
   vi.stubGlobal("fetch", mockFetch);
+  vi.stubGlobal("sessionStorage", sessionStorageMock);
+  sessionStorageMock.clear();
   mockPush.mockClear();
   vi.clearAllMocks();
-  mockUrlParams = new URLSearchParams();
 });
 
 afterEach(() => {
@@ -34,7 +51,7 @@ describe("JoinGamePage", () => {
     expect(screen.getByRole("heading", { name: "Join a Game" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Enter Username")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Enter Game Code")).toBeInTheDocument();
-    
+
     const joinButton = screen.getByRole("button", { name: "Join" });
     expect(joinButton).toBeInTheDocument();
     expect(joinButton).toBeDisabled();
@@ -42,18 +59,6 @@ describe("JoinGamePage", () => {
     const backLink = screen.getByRole("link", { name: /Back to Home/i });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
-  });
-
-  test("pre-populates username if provided in search parameters", () => {
-    mockUrlParams = new URLSearchParams({ username: "Alice" });
-    
-    render(<JoinGamePage />);
-
-    const usernameInput = screen.getByPlaceholderText("Enter Username") as HTMLInputElement;
-    expect(usernameInput.value).toBe("Alice");
-
-    const joinButton = screen.getByRole("button", { name: "Join" });
-    expect(joinButton).toBeDisabled(); // still disabled because roomCode is empty
   });
 
   test("enables join button only when both username and game code are filled", () => {
@@ -77,7 +82,7 @@ describe("JoinGamePage", () => {
     expect(joinButton).toBeEnabled();
   });
 
-  test("successfully joins game and redirects to /create", async () => {
+  test("successfully joins game, saves to sessionStorage, and redirects to /create", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ inviteCode: "XYZW", gameId: "987" }),
@@ -92,7 +97,7 @@ describe("JoinGamePage", () => {
     fireEvent.change(usernameInput, { target: { value: "  Alice  " } });
     // test case-insensitivity and trimming for room code
     fireEvent.change(codeInput, { target: { value: "  xyzw  " } });
-    
+
     expect(joinButton).toBeEnabled();
     fireEvent.click(joinButton);
 
@@ -114,7 +119,10 @@ describe("JoinGamePage", () => {
     });
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith("/create?code=XYZW&gameId=987&username=Alice");
+      expect(sessionStorageMock.getItem("roomCode")).toBe("XYZW");
+      expect(sessionStorageMock.getItem("gameId")).toBe("987");
+      expect(sessionStorageMock.getItem("username")).toBe("Alice");
+      expect(mockPush).toHaveBeenCalledWith("/create");
     });
   });
 
@@ -132,7 +140,7 @@ describe("JoinGamePage", () => {
 
     fireEvent.change(usernameInput, { target: { value: "Alice" } });
     fireEvent.change(codeInput, { target: { value: "XYZW" } });
-    
+
     fireEvent.click(joinButton);
 
     await waitFor(() => {
@@ -155,7 +163,7 @@ describe("JoinGamePage", () => {
 
     fireEvent.change(usernameInput, { target: { value: "Alice" } });
     fireEvent.change(codeInput, { target: { value: "XYZW" } });
-    
+
     fireEvent.click(joinButton);
 
     await waitFor(() => {

@@ -34,9 +34,10 @@ export default function HomePage() {
       }
       const data = await response.json();
       if (data.inviteCode && data.gameId) {
-        router.push(
-          `/create?code=${data.inviteCode}&gameId=${data.gameId}&username=${encodeURIComponent(username.trim())}`,
-        );
+        sessionStorage.setItem("roomCode", data.inviteCode);
+        sessionStorage.setItem("gameId", data.gameId);
+        sessionStorage.setItem("username", username.trim());
+        router.push("/create");
       }
     } catch (error) {
       console.error("Failed to create game:", error);

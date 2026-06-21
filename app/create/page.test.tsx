@@ -3,19 +3,13 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import CreateGamePage from "./page";
 
-// Mock router and search params
+// Mock router
 const mockPush = vi.fn();
-let mockUrlParams = new URLSearchParams({
-  code: "ABCD",
-  gameId: "123",
-  username: "testuser",
-});
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
   }),
-  useSearchParams: () => mockUrlParams,
 }));
 
 // Mock Supabase Server client
@@ -73,18 +67,22 @@ vi.mock("@/lib/supabase/client", () => ({
 
 const mockFetch = vi.fn();
 
+// Helper to set up sessionStorage values before each render
+function setSessionStorage(code: string, gameId: string, username: string) {
+  sessionStorage.setItem("roomCode", code);
+  sessionStorage.setItem("gameId", gameId);
+  sessionStorage.setItem("username", username);
+}
+
 beforeEach(() => {
   vi.stubGlobal("fetch", mockFetch);
   mockPush.mockClear();
   vi.clearAllMocks();
   channelListeners.clear();
   channelSubscribeCallbacks.clear();
-  // Reset default URL search params
-  mockUrlParams = new URLSearchParams({
-    code: "ABCD",
-    gameId: "123",
-    username: "testuser",
-  });
+  sessionStorage.clear();
+  // Set default sessionStorage values
+  setSessionStorage("ABCD", "123", "testuser");
 });
 
 afterEach(() => {
@@ -175,11 +173,7 @@ describe("CreateGamePage - UI Rendering and Roles", () => {
 
   test("renders controls for regular (non-host) player", async () => {
     // Current user is "otherplayer" (not host)
-    mockUrlParams = new URLSearchParams({
-      code: "ABCD",
-      gameId: "123",
-      username: "otherplayer",
-    });
+    setSessionStorage("ABCD", "123", "otherplayer");
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -219,11 +213,7 @@ describe("CreateGamePage - UI Rendering and Roles", () => {
 
   test("renders controls for host player", async () => {
     // Current user is "hostplayer" (host)
-    mockUrlParams = new URLSearchParams({
-      code: "ABCD",
-      gameId: "123",
-      username: "hostplayer",
-    });
+    setSessionStorage("ABCD", "123", "hostplayer");
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -297,11 +287,7 @@ describe("User Interactions and Navigation", () => {
     });
 
     test("Leave Game: skips DELETE API and only navigates to home when currentPlayerId does not exist", async () => {
-        mockUrlParams = new URLSearchParams({
-        code: "ABCD",
-        gameId: "123",
-        username: "unknownuser",
-        });
+        setSessionStorage("ABCD", "123", "unknownuser");
 
         mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -387,11 +373,7 @@ describe("User Interactions and Navigation", () => {
     });
 
     test("Toggle Ready: switches status badge from 'Not Ready' to 'Ready' and back to 'Not Ready' on button clicks", async () => {
-        mockUrlParams = new URLSearchParams({
-            code: "ABCD",
-            gameId: "123",
-            username: "testuser",
-        });
+        setSessionStorage("ABCD", "123", "testuser");
 
         mockFetch.mockResolvedValueOnce({
             ok: true,
@@ -442,11 +424,7 @@ describe("User Interactions and Navigation", () => {
     });
 
     test("Host Controls: Start Game button is disabled when not all players are ready", async () => {
-        mockUrlParams = new URLSearchParams({
-        code: "ABCD",
-        gameId: "123",
-        username: "hostplayer",
-        });
+        setSessionStorage("ABCD", "123", "hostplayer");
 
         mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -481,11 +459,7 @@ describe("User Interactions and Navigation", () => {
     });
 
     test("Host Controls: Start Game button is enabled when all players are ready, broadcasts event, and navigates on click", async () => {
-        mockUrlParams = new URLSearchParams({
-        code: "ABCD",
-        gameId: "123",
-        username: "hostplayer",
-        });
+        setSessionStorage("ABCD", "123", "hostplayer");
 
         mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -527,7 +501,7 @@ describe("User Interactions and Navigation", () => {
         });
 
         await waitFor(() => {
-            expect(mockPush).toHaveBeenCalledWith("/game?code=ABCD&gameId=123&username=hostplayer");
+            expect(mockPush).toHaveBeenCalledWith("/game");
         });
     });
 });
@@ -659,11 +633,7 @@ describe("Supabase Real-time Interactions", () => {
     });
 
     test("Broadcast Channel: start_game event navigates regular player to game page", async () => {
-      mockUrlParams = new URLSearchParams({
-        code: "ABCD",
-        gameId: "123",
-        username: "testuser",
-      });
+      setSessionStorage("ABCD", "123", "testuser");
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -695,16 +665,12 @@ describe("Supabase Real-time Interactions", () => {
       // Trigger start_game event
       broadcastListener!.callback();
 
-      expect(mockPush).toHaveBeenCalledWith("/game?code=ABCD&gameId=123&username=testuser");
+      expect(mockPush).toHaveBeenCalledWith("/game");
     });
 
     test("Presence Channel: leaves and cleanup by host after 5 seconds grace period", async () => {
       // Host is testuser (p1)
-      mockUrlParams = new URLSearchParams({
-        code: "ABCD",
-        gameId: "123",
-        username: "testuser",
-      });
+      setSessionStorage("ABCD", "123", "testuser");
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -778,11 +744,7 @@ describe("Supabase Real-time Interactions", () => {
 
     test("Presence Channel: does not clean up if player reconnects within 5 seconds", async () => {
       // Host is testuser (p1)
-      mockUrlParams = new URLSearchParams({
-        code: "ABCD",
-        gameId: "123",
-        username: "testuser",
-      });
+      setSessionStorage("ABCD", "123", "testuser");
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -849,11 +811,7 @@ describe("Supabase Real-time Interactions", () => {
 
     test("Presence Channel: does not clean up if current user is not host", async () => {
       // Current user is otherplayer (p2)
-      mockUrlParams = new URLSearchParams({
-        code: "ABCD",
-        gameId: "123",
-        username: "otherplayer",
-      });
+      setSessionStorage("ABCD", "123", "otherplayer");
 
       mockFetch.mockResolvedValueOnce({
         ok: true,

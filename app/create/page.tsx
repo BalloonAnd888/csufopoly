@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { supabaseServer } from "@/lib/supabase/client";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -14,11 +14,20 @@ interface Player {
 }
 
 function CreateGameContent() {
-  const searchParams = useSearchParams();
-  const roomCode = searchParams.get("code") || "Loading...";
-  const gameId = searchParams.get("gameId");
-  const currentUsername = searchParams.get("username");
   const router = useRouter();
+
+  const [roomCode, setRoomCode] = useState("Loading...");
+  const [gameId, setGameId] = useState<string | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    const code = sessionStorage.getItem("roomCode");
+    const id = sessionStorage.getItem("gameId");
+    const uname = sessionStorage.getItem("username");
+    if (code) setRoomCode(code);
+    if (id) setGameId(id);
+    if (uname) setCurrentUsername(uname);
+  }, []);
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -114,9 +123,7 @@ function CreateGameContent() {
     const channel = supabaseServer
       .channel(`game-broadcast-${gameId}`)
       .on("broadcast", { event: "start_game" }, () => {
-        router.push(
-          `/game?code=${roomCode}&gameId=${gameId}&username=${currentUsername}`,
-        );
+        router.push("/game");
       })
       .subscribe();
 
@@ -235,9 +242,7 @@ function CreateGameContent() {
       });
     }
 
-    router.push(
-      `/game?code=${roomCode}&gameId=${gameId}&username=${currentUsername}`,
-    );
+    router.push("/game");
   };
 
   return (
